@@ -1,12 +1,9 @@
 package com.timgroup.statsd;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
 
 /**
  * A simple StatsD client implementation facilitating metrics recording.
@@ -23,9 +20,8 @@ import java.util.concurrent.TimeUnit;
  *   <li>{@link #recordGaugeValue} - records the latest fixed value for the specified named gauge</li>
  *   <li>{@link #recordExecutionTime} - records an execution time in milliseconds for the specified named operation</li>
  * </ul>
- * From the perspective of the application, these methods are non-blocking, with the resulting
- * IO operations being carried out in a separate thread. Furthermore, these methods are guaranteed
- * not to throw an exception which may disrupt application execution.
+ * From the perspective of the application, these methods are non-blocking. Furthermore, these
+ * methods are guaranteed not to throw an exception which may disrupt application execution.
  * </p>
  * 
  * <p>As part of a clean system shutdown, the {@link #stop()} method should be invoked
@@ -41,17 +37,9 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     };
 
     private final String prefix;
-    private final DatagramSocket clientSocket;
+    private final DatagramChannel clientChannel;
     private final StatsDClientErrorHandler handler;
-
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
-        final ThreadFactory delegate = Executors.defaultThreadFactory();
-        public Thread newThread(Runnable r) {
-            Thread result = delegate.newThread(r);
-            result.setName("StatsD-" + result.getName());
-            return result;
-        }
-    });
+    private final InetSocketAddress targetAddress;
 
     /**
      * Create a new StatsD client communicating with a StatsD instance on the
@@ -101,10 +89,10 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     public NonBlockingStatsDClient(String prefix, String hostname, int port, StatsDClientErrorHandler errorHandler) throws StatsDClientException {
         this.prefix = prefix;
         this.handler = errorHandler;
+        this.targetAddress = new InetSocketAddress(hostname, port);
         
         try {
-            this.clientSocket = new DatagramSocket();
-            this.clientSocket.connect(new InetSocketAddress(hostname, port));
+            this.clientChannel = DatagramChannel.open();
         } catch (Exception e) {
             throw new StatsDClientException("Failed to start StatsD client", e);
         }
@@ -115,16 +103,11 @@ public final class NonBlockingStatsDClient implements StatsDClient {
      * the socket cannot be closed.
      */
     public void stop() {
-        try {
-            executor.shutdown();
-            executor.awaitTermination(30, TimeUnit.SECONDS);
-        }
-        catch (Exception e) {
-            handler.handle(e);
-        }
-        finally {
-            if (clientSocket != null) {
-                clientSocket.close();
+        if (clientChannel != null) {
+            try {
+                clientChannel.close();
+            } catch (IOException ioe) {
+                this.handler.handle(ioe);
             }
         }
     }
@@ -225,23 +208,13 @@ public final class NonBlockingStatsDClient implements StatsDClient {
 
     private void send(final String message) {
         try {
-            executor.execute(new Runnable() {
-                public void run() {
-                    blockingSend(message);
-                }
-            });
+            final byte[] sendData = message.getBytes();
+            ByteBuffer buf = ByteBuffer.allocate(sendData.length);
+            buf.put(sendData);
+            buf.flip();
+            clientChannel.send(buf, this.targetAddress);
         }
         catch (Exception e) {
-            handler.handle(e);
-        }
-    }
-
-    private void blockingSend(String message) {
-        try {
-            final byte[] sendData = message.getBytes();
-            final DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length);
-            clientSocket.send(sendPacket);
-        } catch (Exception e) {
             handler.handle(e);
         }
     }
