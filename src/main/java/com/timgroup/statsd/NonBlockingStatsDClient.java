@@ -165,16 +165,30 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     }
 
     /**
-     * Records the latest fixed value for the specified named gauge.
+     * Records the latest fixed value for the specified named gauge (integers).
      * 
      * <p>This method is non-blocking and is guaranteed not to throw an exception.</p>
      * 
      * @param aspect
      *     the name of the gauge
      * @param value
-     *     the new reading of the gauge
+     *     the new reading of the gauge as an int
      */
     public void recordGaugeValue(String aspect, int value) {
+        send(String.format("%s.%s:%d|g", prefix, aspect, value));
+    }
+
+    /**
+     * Records the latest fixed value for the specified named gauge (long).
+     *
+     * <p>This method is non-blocking and is guaranteed not to throw an exception.</p>
+     *
+     * @param aspect
+     *     the name of the gauge
+     * @param value
+     *     the new reading of the gauge as a long
+     */
+    public void recordGaugeValue(String aspect, long value) {
         send(String.format("%s.%s:%d|g", prefix, aspect, value));
     }
 
@@ -186,10 +200,17 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     }
 
     /**
+     * Convenience method equivalent to {@link #recordGaugeValue(String, long)}.
+     */
+    public void gauge(String aspect, long value) {
+        recordGaugeValue(aspect, value);
+    }
+
+    /**
      * Records an execution time in milliseconds for the specified named operation.
-     * 
+     *
      * <p>This method is non-blocking and is guaranteed not to throw an exception.</p>
-     * 
+     *
      * @param aspect
      *     the name of the timed operation
      * @param timeInMs

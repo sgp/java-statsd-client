@@ -70,6 +70,18 @@ public class NonBlockingStatsDClientTest {
     }
 
     @Test(timeout=5000L) public void
+    sends_long_gauge_to_statsd() throws Exception {
+        final DummyStatsDServer server = new DummyStatsDServer(STATSD_SERVER_PORT);
+
+        Long overflow = (long)Integer.MAX_VALUE + 1000;
+
+        client.recordGaugeValue("mygauge", overflow);
+        server.waitForMessage();
+
+        assertThat(server.messagesReceived(), contains("my.prefix.mygauge:"+overflow.toString()+"|g"));
+    }
+
+    @Test(timeout=5000L) public void
     sends_timer_to_statsd() throws Exception {
         final DummyStatsDServer server = new DummyStatsDServer(STATSD_SERVER_PORT);
         

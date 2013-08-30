@@ -15,7 +15,9 @@ public final class NoOpStatsDClient implements StatsDClient {
     public void decrementCounter(String aspect) { }
     public void decrement(String aspect) { }
     public void recordGaugeValue(String aspect, int value) { }
+    public void recordGaugeValue(String aspect, long value) { }
     public void gauge(String aspect, int value) { }
+    public void gauge(String aspect, long value) { }
     public void recordExecutionTime(String aspect, int timeInMs) { }
     public void time(String aspect, int value) { }
 }

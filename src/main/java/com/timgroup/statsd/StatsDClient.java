@@ -66,21 +66,38 @@ public interface StatsDClient {
     void decrement(String aspect);
 
     /**
-     * Records the latest fixed value for the specified named gauge.
+     * Records the latest fixed value for the specified named gauge (integers).
      * 
      * <p>This method is non-blocking and is guaranteed not to throw an exception.</p>
      * 
      * @param aspect
-     *     the name of the gauge
+     *     the name of the gauge as an int
      * @param value
      *     the new reading of the gauge
      */
     void recordGaugeValue(String aspect, int value);
 
     /**
+     * Records the latest fixed value for the specified named gauge (long).
+     *
+     * <p>This method is non-blocking and is guaranteed not to throw an exception.</p>
+     *
+     * @param aspect
+     *     the name of the gauge as a long
+     * @param value
+     *     the new reading of the gauge
+     */
+    void recordGaugeValue(String aspect, long value);
+
+    /**
      * Convenience method equivalent to {@link #recordGaugeValue(String, int)}. 
      */
     void gauge(String aspect, int value);
+
+    /**
+     * Convenience method equivalent to {@link #recordGaugeValue(String, long)}.
+     */
+    void gauge(String aspect, long value);
 
     /**
      * Records an execution time in milliseconds for the specified named operation.
