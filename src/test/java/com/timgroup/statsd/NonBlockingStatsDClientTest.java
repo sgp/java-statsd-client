@@ -15,7 +15,14 @@ import org.junit.Test;
 public class NonBlockingStatsDClientTest {
 
     private static final int STATSD_SERVER_PORT = 17254;
-    private final NonBlockingStatsDClient client = new NonBlockingStatsDClient("my.prefix", "localhost", STATSD_SERVER_PORT);
+    private final NonBlockingStatsDClient client = new NonBlockingStatsDClient("my.prefix", "localhost", STATSD_SERVER_PORT, TEST_ERROR_HANDLER);
+
+    private static final StatsDClientErrorHandler TEST_ERROR_HANDLER = new StatsDClientErrorHandler() {
+        public void handle(Exception exception)
+        {
+            System.err.println(exception);
+        }
+    };
 
     @After
     public void stop() throws Exception {
