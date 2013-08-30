@@ -79,7 +79,7 @@ public class NonBlockingStatsDClientTest {
         public DummyStatsDServer(int port) throws SocketException {
             server = new DatagramSocket(port);
             new Thread(new Runnable() {
-                @Override public void run() {
+                public void run() {
                     try {
                         final DatagramPacket packet = new DatagramPacket(new byte[256], 256);
                         server.receive(packet);

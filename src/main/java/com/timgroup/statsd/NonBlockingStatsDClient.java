@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public final class NonBlockingStatsDClient implements StatsDClient {
 
     private static final StatsDClientErrorHandler NO_OP_HANDLER = new StatsDClientErrorHandler() {
-        @Override public void handle(Exception e) { /* No-op */ }
+        public void handle(Exception e) { /* No-op */ }
     };
 
     private final String prefix;
@@ -46,7 +46,7 @@ public final class NonBlockingStatsDClient implements StatsDClient {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
         final ThreadFactory delegate = Executors.defaultThreadFactory();
-        @Override public Thread newThread(Runnable r) {
+        public Thread newThread(Runnable r) {
             Thread result = delegate.newThread(r);
             result.setName("StatsD-" + result.getName());
             return result;
@@ -114,7 +114,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
      * Cleanly shut down this StatsD client. This method may throw an exception if
      * the socket cannot be closed.
      */
-    @Override
     public void stop() {
         try {
             executor.shutdown();
@@ -140,7 +139,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
      * @param delta
      *     the amount to adjust the counter by
      */
-    @Override
     public void count(String aspect, int delta) {
         send(String.format("%s.%s:%d|c", prefix, aspect, delta));
     }
@@ -153,7 +151,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
      * @param aspect
      *     the name of the counter to increment
      */
-    @Override
     public void incrementCounter(String aspect) {
         count(aspect, 1);
     }
@@ -161,7 +158,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     /**
      * Convenience method equivalent to {@link #incrementCounter(String)}. 
      */
-    @Override
     public void increment(String aspect) {
         incrementCounter(aspect);
     }
@@ -174,7 +170,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
      * @param aspect
      *     the name of the counter to decrement
      */
-    @Override
     public void decrementCounter(String aspect) {
         count(aspect, -1);
     }
@@ -182,7 +177,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     /**
      * Convenience method equivalent to {@link #decrementCounter(String)}. 
      */
-    @Override
     public void decrement(String aspect) {
         decrementCounter(aspect);
     }
@@ -197,7 +191,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
      * @param value
      *     the new reading of the gauge
      */
-    @Override
     public void recordGaugeValue(String aspect, int value) {
         send(String.format("%s.%s:%d|g", prefix, aspect, value));
     }
@@ -205,7 +198,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     /**
      * Convenience method equivalent to {@link #recordGaugeValue(String, int)}. 
      */
-    @Override
     public void gauge(String aspect, int value) {
         recordGaugeValue(aspect, value);
     }
@@ -220,7 +212,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
      * @param timeInMs
      *     the time in milliseconds
      */
-    @Override
     public void recordExecutionTime(String aspect, int timeInMs) {
         send(String.format("%s.%s:%d|ms", prefix, aspect, timeInMs));
     }
@@ -228,7 +219,6 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     /**
      * Convenience method equivalent to {@link #recordExecutionTime(String, int)}. 
      */
-    @Override
     public void time(String aspect, int value) {
         recordExecutionTime(aspect, value);
     }
@@ -236,7 +226,7 @@ public final class NonBlockingStatsDClient implements StatsDClient {
     private void send(final String message) {
         try {
             executor.execute(new Runnable() {
-                @Override public void run() {
+                public void run() {
                     blockingSend(message);
                 }
             });
