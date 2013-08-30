@@ -40,7 +40,7 @@
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <artifactId>junit-dep</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
